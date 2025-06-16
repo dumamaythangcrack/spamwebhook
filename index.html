@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Cryzhen Webhook Spammer V5</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1c1c2c;
+      color: #f0f0f0;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #00ffd5;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #2c2c3c;
+      color: white;
+      font-size: 14px;
+    }
+    .webhook-input {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .webhook-input input {
+      flex: 1;
+    }
+    .webhook-input button {
+      margin-left: 6px;
+      padding: 6px 10px;
+      background: #ff4e4e;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button {
+      padding: 8px 15px;
+      margin: 5px 5px 10px 0;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #00ffd5;
+      color: #000;
+    }
+    button:hover {
+      background: #00c2aa;
+    }
+    #logBox {
+      background: #101020;
+      padding: 10px;
+      border-radius: 8px;
+      height: 180px;
+      overflow-y: auto;
+      font-size: 13px;
+      display: none;
+      margin-top: 10px;
+    }
+    .success { color: #00ff88; }
+    .error { color: #ff4e4e; }
+  </style>
+</head>
+<body>
+  <h2>🔥 Cryzhen Webhook Spammer V5</h2>
+
+  <div class="form-group">
+    <label>📌 Webhooks</label>
+    <div id="webhookContainer">
+      <div class="webhook-input">
+        <input type="text" placeholder="https://discord.com/api/webhooks/...">
+        <button onclick="removeWebhookInput(this)">➖</button>
+      </div>
+    </div>
+    <button onclick="addWebhookInput()">➕ Thêm Webhook</button>
+  </div>
+
+  <div class="form-group">
+    <label>💬 Tin nhắn</label>
+    <textarea id="message" rows="2">Cryzhen quảng cáo đây!</textarea>
+  </div>
+
+  <div class="form-group">
+    <label>⏱️ Thời gian giữa mỗi lần gửi (giây, ví dụ: 0.1)</label>
+    <input type="number" id="delay" value="0.5" min="0.001" step="0.001">
+  </div>
+
+  <button onclick="startSpam()">🚀 Bắt đầu</button>
+  <button onclick="stopSpam()">⛔ Dừng</button>
+  <button onclick="toggleLog()">👁️ Log</button>
+
+  <div id="logBox"></div>
+
+  <script>
+    let interval;
+    let currentIndex = 0;
+    let logVisible = false;
+
+    function addWebhookInput() {
+      const container = document.getElementById("webhookContainer");
+      const div = document.createElement("div");
+      div.className = "webhook-input";
+      div.innerHTML = `
+        <input type="text" placeholder="https://discord.com/api/webhooks/...">
+        <button onclick="removeWebhookInput(this)">➖</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeWebhookInput(btn) {
+      const parent = btn.parentElement;
+      parent.remove();
+    }
+
+    function getWebhookList() {
+      const inputs = document.querySelectorAll("#webhookContainer input");
+      return Array.from(inputs)
+        .map(input => input.value.trim())
+        .filter(url => url.startsWith("https://discord.com/api/webhooks/"));
+    }
+
+    function logMessage(msg, type = "success") {
+      const logBox = document.getElementById("logBox");
+      const line = document.createElement("div");
+      line.className = type;
+      line.textContent = msg;
+      logBox.appendChild(line);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function toggleLog() {
+      logVisible = !logVisible;
+      document.getElementById("logBox").style.display = logVisible ? "block" : "none";
+    }
+
+    function startSpam() {
+      const webhooks = getWebhookList();
+      const message = document.getElementById("message").value;
+      const delay = parseFloat(document.getElementById("delay").value) * 1000;
+
+      if (webhooks.length === 0) {
+        alert("Vui lòng nhập ít nhất một webhook hợp lệ.");
+        return;
+      }
+
+      interval = setInterval(() => {
+        const url = webhooks[currentIndex];
+
+        // Đổi tên webhook
+        fetch(url.replace(/(\/messages.*)?$/, ""), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Cryzhen V1" })
+        });
+
+        // Gửi tin nhắn
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: message })
+        }).then(r => {
+          if (r.ok) {
+            logMessage(`[✔️] Gửi thành công tới webhook ${currentIndex + 1}`, "success");
+          } else {
+            logMessage(`[❌] Thất bại webhook ${currentIndex + 1} | Lỗi: ${r.status}`, "error");
+          }
+        }).catch(err => {
+          logMessage(`[⚠️] Lỗi mạng: ${err}`, "error");
+        });
+
+        currentIndex = (currentIndex + 1) % webhooks.length;
+      }, delay);
+    }
+
+    function stopSpam() {
+      clearInterval(interval);
+      logMessage("⛔ Đã dừng spam");
+    }
+
+    // Chống DevTools
+    document.addEventListener("keydown", function (e) {
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && ["I", "J", "C"].includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.key === "U")
+      ) {
+        e.preventDefault();
+        alert("DevTools đã bị chặn!");
+        return false;
+      }
+    });
+    document.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+    });
+  </script>
+</body>
+</html>
