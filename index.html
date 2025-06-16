@@ -2,12 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Cryzhen Webhook Spammer V6</title>
+  <title>Cryzhen Webhook V7 Ultimate</title>
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body, html {
       margin: 0;
       padding: 0;
@@ -103,10 +100,7 @@
 
     .success { color: #00ff88; }
     .error { color: #ff4e4e; }
-
-    .form-section {
-      margin-bottom: 20px;
-    }
+    .form-section { margin-bottom: 20px; }
 
   </style>
 </head>
@@ -115,7 +109,7 @@
 <div id="loadingScreen">⏳ Đang load dữ liệu...</div>
 
 <div id="mainContent">
-  <h2>🔥 Cryzhen Webhook Spammer V6</h2>
+  <h2>🔥 Cryzhen Webhook Spammer V7 Ultimate</h2>
 
   <div class="form-section">
     <label>📌 Webhooks</label>
@@ -134,8 +128,8 @@
   </div>
 
   <div class="form-section">
-    <label>⏱️ Delay (giây, ví dụ: 0.1)</label>
-    <input type="number" id="delay" value="0.5" min="0.001" step="0.001">
+    <label>⏱️ Delay (giây, ví dụ: 0.001)</label>
+    <input type="number" id="delay" value="0.001" min="0.001" step="0.001">
   </div>
 
   <div class="form-section">
@@ -152,7 +146,7 @@
   let currentIndex = 0;
   let logVisible = false;
 
-  // Loading screen 3s
+  // Loading screen
   window.onload = () => {
     setTimeout(() => {
       document.getElementById("loadingScreen").style.display = "none";
@@ -221,11 +215,13 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: message })
-      }).then(r => {
-        if (r.ok) {
+      }).then(async res => {
+        if (res.status === 429) {
+          logMessage(`[⏳] Rate limit tại webhook ${currentIndex + 1} → Bỏ qua`, "error");
+        } else if (res.ok) {
           logMessage(`[✔️] Thành công → webhook ${currentIndex + 1}`, "success");
         } else {
-          logMessage(`[❌] Lỗi gửi webhook ${currentIndex + 1} | ${r.status}`, "error");
+          logMessage(`[❌] Lỗi ${res.status} tại webhook ${currentIndex + 1}`, "error");
         }
       }).catch(err => {
         logMessage(`[⚠️] Lỗi mạng: ${err}`, "error");
